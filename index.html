@@ -41,22 +41,28 @@ input:focus{border-color:var(--accent)}
 .nc input{text-align:center}
 .gen{width:100%;padding:15px;background:var(--accent);color:#0f0f0f;border:none;border-radius:7px;font-family:'Martian Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;cursor:pointer;transition:.12s;-webkit-tap-highlight-color:transparent;min-height:50px}
 .gen:active{background:#d4ff1a;transform:scale(0.98)}
+
+/* Навігація між чеками */
 .rnav{display:flex;align-items:center;gap:14px}
 .nbtn{width:44px;height:44px;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;-webkit-tap-highlight-color:transparent}
 .nbtn:active:not(:disabled){border-color:var(--accent);color:var(--accent)}
 .nbtn:disabled{opacity:.25;cursor:default}
 .nlbl{font-size:11px;color:var(--muted);min-width:70px;text-align:center}
 
+/* Кнопка та результати */
 .save-wrap{width:260px}
 .save-btn{width:100%;padding:15px;background:var(--accent);color:#0f0f0f;border:none;border-radius:7px;font-family:'Martian Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:52px;transition:.12s}
 .save-btn:active:not(:disabled){background:#d4ff1a;transform:scale(0.97)}
-.save-btn:disabled{opacity:0.55}
 
-.img-preview{display:none;flex-direction:column;align-items:center;gap:10px;width:260px}
-.img-preview.visible{display:flex}
-.img-preview img{width:260px;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
-.img-hint{font-size:10px;color:var(--muted);text-align:center;line-height:1.7;letter-spacing:.03em}
+.receipt-container{position:relative;width:260px;display:flex;flex-direction:column;align-items:center}
+.img-result{width:260px;border-radius:4px;display:none;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
+.img-result.visible{display:block}
+.rw.hidden{display:none}
 
+.img-hint{font-size:10px;color:var(--accent);text-align:center;margin-top:12px;display:none;font-weight:700;letter-spacing:0.05em}
+.img-hint.visible{display:block}
+
+/* DOM чек */
 .rw{display:inline-flex;flex-direction:column;align-items:center;background:transparent;position:relative}
 .tt{width:260px;height:12px;background:repeating-linear-gradient(90deg,#e0ddd7 0,#e0ddd7 4px,#d0cdc7 4px,#d0cdc7 8px);border-radius:2px 2px 0 0;opacity:.6}
 .receipt{width:260px;background:var(--paper);padding:16px 12px 14px;font-family:'Courier New',monospace;font-size:12px;line-height:1.55;color:#1a1a1a}
@@ -66,9 +72,11 @@ input:focus{border-color:var(--accent)}
 .rv{text-align:right;white-space:nowrap;margin-left:4px}
 .qb{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:8px}
 .ql{font-size:9px;color:#888;text-align:center}
+
 .empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:80px 20px}
 .empty .ei{font-size:44px;opacity:.35}
 .empty p{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#444;text-align:center}
+
 @media(max-width:700px){
   .tabs{display:flex}
   .main{grid-template-columns:1fr;overflow:visible}
@@ -167,11 +175,13 @@ function adj(id,d,mn,step){
   el.value=Math.max(mn,v).toFixed(id==='cnt'?0:3);
 }
 
-function buildRecData(fop,name,qty,price,total,payLbl){
+function buildRecData(fop,name,qty,price,total,payLbl,offsetMinutes){
+  var d = new Date();
+  d.setMinutes(d.getMinutes() - offsetMinutes);
   return {fop:fop,name:name,qty:qty,price:price,total:total,payLbl:payLbl,
     loc:'2'+String(Math.floor(Math.random()*9999999)).padStart(7,'0'),
     cid:'i'+Math.random().toString(36).substr(2,9),
-    dt:new Date().toLocaleString('uk-UA')};
+    dt:d.toLocaleString('uk-UA')};
 }
 
 function buildRecDom(d){
@@ -211,11 +221,22 @@ function showRec(idx){
     p.appendChild(nav);
   }
 
-  var w=document.createElement('div'); w.className='rw';
+  var container = document.createElement('div'); container.className='receipt-container';
+  
+  var w=document.createElement('div'); w.className='rw'; w.id='receipt-dom';
   var tt=document.createElement('div'); tt.className='tt'; w.appendChild(tt);
   var domRec=buildRecDom(recList[idx]); w.appendChild(domRec);
   var tb=document.createElement('div'); tb.className='tb'; w.appendChild(tb);
-  p.appendChild(w);
+  container.appendChild(w);
+
+  var imgRes = document.createElement('img'); imgRes.className='img-result'; imgRes.id='img-result';
+  container.appendChild(imgRes);
+
+  var hint = document.createElement('p'); hint.className='img-hint'; hint.id='save-hint';
+  hint.innerHTML='Утримуйте фото для збереження';
+  container.appendChild(hint);
+
+  p.appendChild(container);
 
   var qrBox=domRec.querySelector('.qr-box');
   if(qrBox){
@@ -229,14 +250,6 @@ function showRec(idx){
   btn.addEventListener('click', doSave);
   sw.appendChild(btn);
   p.appendChild(sw);
-
-  var iv=document.createElement('div'); iv.className='img-preview'; iv.id='img-preview';
-  var imgEl=document.createElement('img'); imgEl.id='preview-img';
-  var hint=document.createElement('p'); hint.className='img-hint';
-  hint.innerHTML='Натисніть та утримуйте фото<br>&#8594; «Додати до фотографій»<br>або поділіться через Share';
-  iv.appendChild(imgEl);
-  iv.appendChild(hint);
-  p.appendChild(iv);
 }
 
 var _cachedCanvas=null, _cachedCid=null;
@@ -284,7 +297,7 @@ function buildReceiptCanvas(d){
   add('CHECKBOX',false,true);
 
   var qrSize = 80 * SC;
-  var H = PT + lines.length * LH + qrSize + (15 * SC) + PB;
+  var H = PT + lines.length * LH + qrSize + (20 * SC) + PB;
   
   var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
   var ctx=cv.getContext('2d');
@@ -311,7 +324,6 @@ function buildReceiptCanvas(d){
     ctx.fillStyle = "#888";
     ctx.fillText(hintText, (W - hW) / 2, y + (10 * SC));
   }
-
   return cv;
 }
 
@@ -325,38 +337,39 @@ function getCanvas(){
 
 function doSave(){
   var btn=document.getElementById('btn-save');
-  if(btn){btn.textContent='Обробка...'; btn.disabled=true;}
+  if(btn){btn.textContent='Створення фото...'; btn.disabled=true;}
 
   setTimeout(function(){
     var canvas;
     try{canvas=getCanvas();}
     catch(e){
-      alert('Помилка рендеру: '+(e&&e.message?e.message:String(e)));
+      alert('Помилка: '+(e&&e.message?e.message:String(e)));
       if(btn){btn.textContent='Зберегти фото'; btn.disabled=false;}
       return;
     }
 
     var dataUrl=canvas.toDataURL('image/png');
-    var iv=document.getElementById('img-preview');
-    var imgEl=document.getElementById('preview-img');
-    if(iv&&imgEl){
-      imgEl.src=dataUrl;
-      iv.classList.add('visible');
-    }
+    
+    // ПРИХОВУЄМО ТЕКСТ ТА ПОКАЗУЄМО КАРТИНКУ
+    document.getElementById('receipt-dom').classList.add('hidden');
+    var imgResult = document.getElementById('img-result');
+    imgResult.src = dataUrl;
+    imgResult.classList.add('visible');
+    document.getElementById('save-hint').classList.add('visible');
 
+    // Нативний Share Sheet
     canvas.toBlob(function(blob){
-      if(blob && navigator.canShare){
-        var file=new File([blob],'check.png',{type:'image/png'});
-        try{
-          if(navigator.canShare({files:[file]})){
-            navigator.share({files:[file],title:'Чек OneZoo'})
-              .catch(function(){});
-          }
-        }catch(e){}
+      if(blob && navigator.share){
+        var file=new File([blob],'onezoo_check.png',{type:'image/png'});
+        navigator.share({files:[file],title:'Чек OneZoo'})
+          .finally(function(){
+            if(btn){btn.textContent='Зберегти фото'; btn.disabled=false;}
+          });
+      } else {
+         if(btn){btn.textContent='Зберегти фото'; btn.disabled=false;}
       }
-      if(btn){btn.textContent='Зберегти фото'; btn.disabled=false;}
     },'image/png');
-  }, 100);
+  }, 150);
 }
 
 function generate(){
@@ -366,8 +379,12 @@ function generate(){
   var count=parseInt(document.getElementById('cnt').value)||1;
   if(!name||!price||isNaN(price)){alert('Заповніть назву та ціну');return false;}
   recList=[]; _cachedCanvas=null; _cachedCid=null;
+  
+  var totalOffset = 0;
   for(var i=0;i<count;i++){
-    recList.push(buildRecData(FOP[sFop],name,qty,price,price*qty,sPay==='cash'?'Готівка':'Картка'));
+    // Від 10 до 20 хвилин між чеками
+    totalOffset += Math.floor(Math.random() * 11) + 10; 
+    recList.push(buildRecData(FOP[sFop],name,qty,price,price*qty,sPay==='cash'?'Готівка':'Картка', totalOffset));
   }
   showRec(0);
   return true;
