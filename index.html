@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Генератор чеків OneZoo</title>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f0f;--panel:#161616;--border:#2a2a2a;--accent:#c8ff00;--text:#e8e8e8;--muted:#555;--inp:#1e1e1e;--paper:#faf8f5}
+body{font-family:'Martian Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;min-height:-webkit-fill-available;display:flex;flex-direction:column;-webkit-text-size-adjust:100%}
+header{background:var(--panel);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+.logo{width:28px;height:28px;background:var(--accent);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+header h1{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+header small{font-size:9px;color:var(--muted);margin-left:4px}
+.tabs{display:none;background:var(--panel);border-bottom:1px solid var(--border);padding:0 16px}
+.tab{flex:1;padding:11px 0;font-family:'Martian Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:none;border:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.12s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.main{display:grid;grid-template-columns:360px 1fr;flex:1;overflow:hidden}
+.fp{background:var(--panel);border-right:1px solid var(--border);padding:20px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;-webkit-overflow-scrolling:touch}
+.pp{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:30px 20px;gap:18px;background:#111;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sec{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:10px}
+.fop-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fc{border:1px solid var(--border);border-radius:7px;padding:10px 8px;cursor:pointer;background:var(--inp);text-align:center;transition:.12s;-webkit-tap-highlight-color:transparent}
+.fc:active{transform:scale(0.97)}
+.fc.active{border-color:var(--accent);background:rgba(200,255,0,.07)}
+.fc .em{font-size:20px;display:block;margin-bottom:5px}
+.fc .fn{font-size:9px;line-height:1.5;color:var(--text)}
+.fc.active .fn{color:var(--accent)}
+.field{display:flex;flex-direction:column;gap:5px}
+label{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+input[type=text],input[type=number]{background:var(--inp);border:1px solid var(--border);border-radius:6px;padding:11px 13px;color:var(--text);font-family:'Martian Mono',monospace;font-size:16px;outline:none;transition:border-color .12s;width:100%;-webkit-appearance:none;appearance:none}
+input:focus{border-color:var(--accent)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nc{display:flex;align-items:center;gap:6px}
+.nb{width:44px;height:44px;background:var(--border);border:none;border-radius:5px;color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.1s;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.nb:active{background:#444}
+.nc input{text-align:center}
+.gen{width:100%;padding:15px;background:var(--accent);color:#0f0f0f;border:none;border-radius:7px;font-family:'Martian Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;cursor:pointer;transition:.12s;-webkit-tap-highlight-color:transparent;min-height:50px}
+.gen:active{background:#d4ff1a;transform:scale(0.98)}
+.rnav{display:flex;align-items:center;gap:14px}
+.nbtn{width:44px;height:44px;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;-webkit-tap-highlight-color:transparent}
+.nbtn:active:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.nbtn:disabled{opacity:.25;cursor:default}
+.nlbl{font-size:11px;color:var(--muted);min-width:70px;text-align:center}
+.action-wrap{display:flex;flex-direction:column;gap:8px;width:260px}
+.abrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.abtn{padding:13px 8px;border:none;border-radius:7px;font-family:'Martian Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;transition:.12s;-webkit-tap-highlight-color:transparent;width:100%}
+.abtn:active:not(:disabled){transform:scale(0.96)}
+.abtn:disabled{opacity:0.55;cursor:wait}
+.abtn-tg{background:#2AABEE;color:#fff}
+.abtn-vb{background:#7360F2;color:#fff}
+.abtn-save{background:var(--accent);color:#0f0f0f}
+.rw{display:inline-flex;flex-direction:column;align-items:center;background:transparent;position:relative}
+.tt{width:260px;height:12px;background:repeating-linear-gradient(90deg,#e0ddd7 0,#e0ddd7 4px,#d0cdc7 4px,#d0cdc7 8px);border-radius:2px 2px 0 0;opacity:.6}
+.receipt{width:260px;background:var(--paper);padding:16px 12px 14px;font-family:'Courier New',monospace;font-size:12px;line-height:1.55;color:#1a1a1a}
+.tb{width:260px;height:18px;background:linear-gradient(to bottom,#e0ddd7,#c5c0b8);border-radius:0 0 4px 4px;clip-path:polygon(0 0,6% 100%,12% 0,18% 100%,24% 0,30% 100%,36% 0,42% 100%,48% 0,54% 100%,60% 0,66% 100%,72% 0,78% 100%,84% 0,90% 100%,96% 0,100% 100%,100% 0)}
+.rc{text-align:center}.rb{font-weight:700}
+.rr{display:flex;justify-content:space-between}
+.rv{text-align:right;white-space:nowrap;margin-left:4px}
+.qb{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:8px}
+.ql{font-size:9px;color:#888;text-align:center}
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:80px 20px}
+.empty .ei{font-size:44px;opacity:.35}
+.empty p{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#444;text-align:center}
+@media(max-width:700px){
+  .tabs{display:flex}
+  .main{grid-template-columns:1fr;overflow:visible}
+  .fp{border-right:none;padding:16px 14px;display:none}
+  .pp{padding:20px 14px;display:none}
+  .fp.tab-active{display:flex}
+  .pp.tab-active{display:flex;min-height:60vh}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">&#x1F9FE;</div>
+  <h1>Генератор чеків</h1>
+  <small>ONEZOO</small>
+</header>
+
+<div class="tabs">
+  <button class="tab active" id="tab-form" onclick="switchTab('form')">Форма</button>
+  <button class="tab" id="tab-preview" onclick="switchTab('preview')">Чек</button>
+</div>
+
+<div class="main">
+  <div class="fp tab-active" id="panel-form">
+    <div>
+      <div class="sec">ФОП</div>
+      <div class="fop-grid">
+        <div class="fc active" data-key="МАКАРТЕТ" onclick="selFopFn(this)">
+          <span class="em">&#x1F469;&#x200D;&#x1F9B0;</span><div class="fn">ФОП МАКАРТЕТ<br>О. О.</div>
+        </div>
+        <div class="fc" data-key="МАКАРОВА" onclick="selFopFn(this)">
+          <span class="em">&#x1F469;&#x200D;&#x1F9B1;</span><div class="fn">ФОП МАКАРОВА<br>В. С.</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="sec">Товар</div>
+      <div class="field">
+        <label>Назва товару</label>
+        <input type="text" id="itemName" placeholder="напр. КРЕМ-ЛАСОЩІ..." autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
+      </div>
+      <div class="row2" style="margin-top:10px">
+        <div class="field"><label>Ціна</label><input type="number" id="price" placeholder="79.00" step="0.01" inputmode="decimal"/></div>
+        <div class="field"><label>К-сть</label><input type="number" id="quantity" value="1" step="0.001" inputmode="decimal"/></div>
+      </div>
+    </div>
+    <div>
+      <div class="sec">Оплата</div>
+      <div class="fop-grid">
+        <div class="fc active" id="pay-cash" onclick="selPayFn('cash',this)"><span class="em">&#x1F4B5;</span><div class="fn">Готівка</div></div>
+        <div class="fc" id="pay-card" onclick="selPayFn('card',this)"><span class="em">&#x1F4B3;</span><div class="fn">Картка</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="sec">Кількість чеків</div>
+      <div class="nc">
+        <button class="nb" onclick="adj('cnt',-1,1,1)">&#8722;</button>
+        <input type="number" id="cnt" value="1" min="1" max="20" style="width:60px" inputmode="numeric"/>
+        <button class="nb" onclick="adj('cnt',1,1,1)">+</button>
+      </div>
+    </div>
+    <button class="gen" onclick="generateAndSwitch()">&#9654; Генерувати</button>
+  </div>
+
+  <div class="pp" id="panel-preview">
+    <div class="empty"><div class="ei">&#x1F9FE;</div><p>Очікування даних...</p></div>
+  </div>
+</div>
+
+<script>
+var FOP={
+  'МАКАРТЕТ':{name:['ФОП МАКАРТЕТ','ОЛЕКСАНДРА','ОЛЕКСАНДРІВНА'],addr:['м. Київ, Оболонський','район, вул. Героїв','Дніпра 22Б'],id:'ІД 3549300608',fnPrro:'4001037384'},
+  'МАКАРОВА':{name:['ФОП МАКАРОВА','ВІКТОРІЯ','СЕРГІЇВНА'],addr:['м. Київ, Оболонський','район, вул. Героїв','Дніпра 22Б'],id:'ІД 3278910321',fnPrro:'4001037384'}
+};
+var sFop='МАКАРТЕТ', sPay='cash', recList=[], cur=0;
+
+function switchTab(t){
+  var f=(t==='form');
+  document.getElementById('tab-form').classList.toggle('active',f);
+  document.getElementById('tab-preview').classList.toggle('active',!f);
+  document.getElementById('panel-form').classList.toggle('tab-active',f);
+  document.getElementById('panel-preview').classList.toggle('tab-active',!f);
+}
+function selFopFn(el){document.querySelectorAll('.fop-grid .fc').forEach(function(c){c.classList.remove('active');});el.classList.add('active');sFop=el.dataset.key;}
+function selPayFn(t,el){document.querySelectorAll('#pay-cash,#pay-card').forEach(function(c){c.classList.remove('active');});el.classList.add('active');sPay=t;}
+function adj(id,d,mn,step){var el=document.getElementById(id);var v=(parseFloat(el.value)||mn)+d*step;el.value=Math.max(mn,v).toFixed(id==='cnt'?0:3);}
+
+function randId(){return 'i'+Math.random().toString(36).substr(2,9);}
+
+function buildRecData(fop,name,qty,price,total,payLbl){
+  return {fop:fop,name:name,qty:qty,price:price,total:total,payLbl:payLbl,
+    loc:'2'+String(Math.floor(Math.random()*9999999)).padStart(7,'0'),
+    cid:randId(), dt:new Date().toLocaleString('uk-UA')};
+}
+
+function buildRecDom(d){
+  var el=document.createElement('div'); el.className='receipt';
+  function cen(t,cls){return '<p class="rc'+(cls?' '+cls:'')+'">'+t+'</p>';}
+  function row(l,v){return '<div class="rr"><span>'+l+'</span><span class="rv">'+v+'</span></div>';}
+  el.innerHTML=
+    d.fop.name.map(function(t){return cen(t);}).join('')+cen('магазин')+
+    d.fop.addr.map(function(t){return cen(t);}).join('')+cen(d.fop.id)+
+    cen('======================','rb')+
+    '<p>'+d.qty.toFixed(3)+' x '+d.price.toFixed(2)+'</p>'+
+    '<p>'+d.name.toUpperCase()+'</p>'+
+    row('СУМА',d.total.toFixed(2)+' ГРН')+cen('----------------------')+
+    row(d.payLbl,d.total.toFixed(2)+' ГРН')+row('СУМА',d.total.toFixed(2)+' ГРН')+
+    cen('======================','rb')+
+    row('Локальний номер:',d.loc)+cen('Чек № '+d.cid)+cen(d.dt)+
+    row('ФН ПРРО',d.fop.fnPrro)+
+    cen('ФІСКАЛЬНИЙ ЧЕК','rb')+cen('ДЯКУЄМО ЗА ПОКУПКУ!')+cen('CHECKBOX')+
+    '<div class="qb"><div class="qr-box" data-url="https://check.checkbox.ua/'+d.cid+'"></div>'+
+    '<div class="ql">Перевірити чек онлайн</div></div>';
+  return el;
+}
+
+function showRec(idx){
+  cur=idx;
+  var p=document.getElementById('panel-preview'); p.innerHTML='';
+  if(recList.length>1){
+    var nav=document.createElement('div'); nav.className='rnav';
+    nav.innerHTML='<button class="nbtn" onclick="showRec(cur-1)"'+(idx===0?' disabled':'')+'>&#8592;</button>'+
+      '<div class="nlbl">'+(idx+1)+' / '+recList.length+'</div>'+
+      '<button class="nbtn" onclick="showRec(cur+1)"'+(idx===recList.length-1?' disabled':'')+'>&#8594;</button>';
+    p.appendChild(nav);
+  }
+  var w=document.createElement('div'); w.className='rw';
+  var tt=document.createElement('div'); tt.className='tt'; w.appendChild(tt);
+  var domRec=buildRecDom(recList[idx]); w.appendChild(domRec);
+  var tb=document.createElement('div'); tb.className='tb'; w.appendChild(tb);
+  p.appendChild(w);
+
+  var qrBox=domRec.querySelector('.qr-box');
+  if(qrBox){
+    try{new QRCode(qrBox,{text:qrBox.dataset.url,width:80,height:80,colorDark:'#1a1a1a',colorLight:'#faf8f5',correctLevel:QRCode.CorrectLevel.M});}
+    catch(e){qrBox.innerHTML='<div style="font-size:8px;color:#888;word-break:break-all">'+qrBox.dataset.url+'</div>';}
+  }
+
+  var s=document.createElement('div'); s.className='action-wrap';
+  s.innerHTML=
+    '<div class="abrow">'+
+    '<button class="abtn abtn-tg" id="btn-tg" onclick="actionShare(\'tg\')">Telegram</button>'+
+    '<button class="abtn abtn-vb" id="btn-vb" onclick="actionShare(\'vb\')">Viber</button>'+
+    '</div>'+
+    '<button class="abtn abtn-save" id="btn-save" onclick="actionSave()">Зберегти фото</button>';
+  p.appendChild(s);
+}
+
+/* ===== CANVAS РЕНДЕР (без html2canvas) ===== */
+var _cachedCanvas=null, _cachedCid=null;
+
+function buildReceiptCanvas(d){
+  var SC=3, PW=260;
+  var W=PW*SC;
+  var FS=12*SC;
+  var LH=Math.round(FS*1.55);
+  var PX=12*SC, PT=16*SC, PB=14*SC;
+
+  // Вимірюємо ширину символу
+  var tc=document.createElement('canvas'); tc.width=W; tc.height=10;
+  var tx=tc.getContext('2d'); tx.font=FS+'px "Courier New",monospace';
+  var CW=Math.ceil(tx.measureText('M').width);
+  var COLS=Math.floor((W-PX*2)/CW);
+
+  function sepLine(ch){var s='';while(s.length<COLS)s+=ch;return s.substr(0,COLS);}
+  function twoCol(left,right){
+    var space=COLS-left.length-right.length;
+    if(space<1)space=1;
+    return left+Array(space+1).join(' ')+right;
+  }
+
+  var lines=[];
+  function add(txt,bold,center){lines.push({txt:String(txt),bold:!!bold,center:!!center});}
+
+  d.fop.name.forEach(function(t){add(t,false,true);});
+  add('магазин',false,true);
+  d.fop.addr.forEach(function(t){add(t,false,true);});
+  add(d.fop.id,false,true);
+  add(sepLine('='),false,false);
+  add(d.qty.toFixed(3)+' x '+d.price.toFixed(2),false,false);
+  add(d.name.toUpperCase(),false,false);
+  add(twoCol('СУМА',d.total.toFixed(2)+' ГРН'),false,false);
+  add(sepLine('-'),false,false);
+  add(twoCol(d.payLbl,d.total.toFixed(2)+' ГРН'),false,false);
+  add(twoCol('СУМА',d.total.toFixed(2)+' ГРН'),false,false);
+  add(sepLine('='),false,false);
+  add(twoCol('Локальний номер:',d.loc),false,false);
+  add('Чек № '+d.cid,false,true);
+  add(d.dt,false,true);
+  add(twoCol('ФН ПРРО',d.fop.fnPrro),false,false);
+  add('ФІСКАЛЬНИЙ ЧЕК',true,true);
+  add('ДЯКУЄМО ЗА ПОКУПКУ!',false,true);
+  add('CHECKBOX',false,true);
+  add('',false,false);
+  add('check.checkbox.ua/'+d.cid,false,true);
+
+  var H=PT+lines.length*LH+PB;
+  var canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  var ctx=canvas.getContext('2d');
+
+  ctx.fillStyle='#faf8f5';
+  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1a1a1a';
+
+  var FONT_N=FS+'px "Courier New",monospace';
+  var FONT_B='bold '+FS+'px "Courier New",monospace';
+
+  var y=PT+FS;
+  for(var i=0;i<lines.length;i++){
+    var ln=lines[i];
+    ctx.font=ln.bold?FONT_B:FONT_N;
+    if(ln.center){
+      var tw=ctx.measureText(ln.txt).width;
+      ctx.fillText(ln.txt,Math.round((W-tw)/2),y);
+    } else {
+      ctx.fillText(ln.txt,PX,y);
+    }
+    y+=LH;
+  }
+  return canvas;
+}
+
+function getCanvas(){
+  var d=recList[cur];
+  if(_cachedCanvas&&_cachedCid===d.cid) return _cachedCanvas;
+  _cachedCanvas=buildReceiptCanvas(d);
+  _cachedCid=d.cid;
+  return _cachedCanvas;
+}
+
+function setBusy(busy){
+  ['btn-save','btn-tg','btn-vb'].forEach(function(id){
+    var b=document.getElementById(id); if(!b)return;
+    if(busy){if(!b._orig)b._orig=b.innerHTML; b.innerHTML='...'; b.disabled=true;}
+    else{b.innerHTML=b._orig||b.innerHTML; b.disabled=false;}
+  });
+}
+
+function getDataUrl(){
+  try{return getCanvas().toDataURL('image/png');}
+  catch(e){alert('Помилка рендеру: '+(e&&e.message?e.message:String(e)));return null;}
+}
+
+function openImageTab(dataUrl,app){
+  var appName=app==='tg'?'Telegram':app==='vb'?'Viber':'';
+  var color=app==='tg'?'#2AABEE':'#7360F2';
+  var deepLink=app==='tg'?'tg://resolve':'viber://';
+  var w=window.open('','_blank');
+  if(!w){alert('Дозвольте спливаючі вікна для цього сайту');return;}
+  var btnHtml=appName?('<a style="display:block;margin-top:12px;padding:12px 28px;background:'+color+';color:#fff;border-radius:8px;font-family:monospace;font-size:14px;font-weight:bold;text-decoration:none;text-align:center" href="'+deepLink+'">Відкрити '+appName+'</a>'):'';
+  var hint=appName
+    ?'1. Утримуйте фото → «Додати до фотографій»<br>2. Відкрийте '+appName+' і перешліть з галереї'
+    :'Натисніть та утримуйте фото<br>→ «Додати до фотографій»';
+  w.document.write('<!DOCTYPE html><html><head>'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1">'
+    +'<title>Чек OneZoo</title>'
+    +'<style>body{margin:0;background:#111;display:flex;flex-direction:column;align-items:center;padding:20px;gap:12px}'
+    +'img{max-width:100%;border-radius:4px}'
+    +'.hint{color:#aaa;font-family:monospace;font-size:13px;text-align:center;line-height:1.8}'
+    +'</style></head><body>'
+    +'<img src="'+dataUrl+'">'
+    +'<p class="hint">'+hint+'</p>'
+    +btnHtml
+    +'</body></html>');
+  w.document.close();
+}
+
+function actionSave(){
+  setBusy(true);
+  var dataUrl=getDataUrl();
+  if(!dataUrl){setBusy(false);return;}
+  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(isIOS){
+    openImageTab(dataUrl,'');
+  } else {
+    var a=document.createElement('a');
+    a.href=dataUrl; a.download='check_'+recList[cur].cid+'.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+  setBusy(false);
+}
+
+function actionShare(app){
+  setBusy(true);
+  var canvas;
+  try{canvas=getCanvas();}
+  catch(e){alert('Помилка: '+(e&&e.message?e.message:String(e)));setBusy(false);return;}
+
+  canvas.toBlob(function(blob){
+    if(!blob){
+      // toBlob не підтримується — fallback на dataURL
+      var dataUrl=canvas.toDataURL('image/png');
+      openImageTab(dataUrl,app);
+      setBusy(false);
+      return;
+    }
+    var file=new File([blob],'check.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:'Чек OneZoo'})
+        .then(function(){setBusy(false);})
+        .catch(function(e){
+          if(e&&e.name==='AbortError'){setBusy(false);return;}
+          openImageTab(canvas.toDataURL('image/png'),app);
+          setBusy(false);
+        });
+    } else {
+      openImageTab(canvas.toDataURL('image/png'),app);
+      setBusy(false);
+    }
+  },'image/png');
+}
+
+function generate(){
+  var name=document.getElementById('itemName').value.trim();
+  var price=parseFloat(document.getElementById('price').value);
+  var qty=parseFloat(document.getElementById('quantity').value)||1;
+  var count=parseInt(document.getElementById('cnt').value)||1;
+  if(!name||!price||isNaN(price)){alert('Заповніть назву та ціну');return false;}
+  recList=[]; _cachedCanvas=null; _cachedCid=null;
+  for(var i=0;i<count;i++){
+    recList.push(buildRecData(FOP[sFop],name,qty,price,price*qty,sPay==='cash'?'Готівка':'Картка'));
+  }
+  showRec(0);
+  return true;
+}
+
+function generateAndSwitch(){
+  if(generate()&&window.innerWidth<=700) switchTab('preview');
+}
+</script>
+</body>
+</html>
