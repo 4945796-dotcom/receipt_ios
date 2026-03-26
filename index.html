@@ -47,19 +47,16 @@ input:focus{border-color:var(--accent)}
 .nbtn:disabled{opacity:.25;cursor:default}
 .nlbl{font-size:11px;color:var(--muted);min-width:70px;text-align:center}
 
-/* Кнопка зберегти */
 .save-wrap{width:260px}
 .save-btn{width:100%;padding:15px;background:var(--accent);color:#0f0f0f;border:none;border-radius:7px;font-family:'Martian Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:52px;transition:.12s}
 .save-btn:active:not(:disabled){background:#d4ff1a;transform:scale(0.97)}
 .save-btn:disabled{opacity:0.55}
 
-/* Прев'ю зображення після рендеру */
 .img-preview{display:none;flex-direction:column;align-items:center;gap:10px;width:260px}
 .img-preview.visible{display:flex}
 .img-preview img{width:260px;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
 .img-hint{font-size:10px;color:var(--muted);text-align:center;line-height:1.7;letter-spacing:.03em}
 
-/* DOM чек */
 .rw{display:inline-flex;flex-direction:column;align-items:center;background:transparent;position:relative}
 .tt{width:260px;height:12px;background:repeating-linear-gradient(90deg,#e0ddd7 0,#e0ddd7 4px,#d0cdc7 4px,#d0cdc7 8px);border-radius:2px 2px 0 0;opacity:.6}
 .receipt{width:260px;background:var(--paper);padding:16px 12px 14px;font-family:'Courier New',monospace;font-size:12px;line-height:1.55;color:#1a1a1a}
@@ -226,7 +223,6 @@ function showRec(idx){
     catch(e){qrBox.innerHTML='<div style="font-size:8px;color:#888">'+qrBox.dataset.url+'</div>';}
   }
 
-  // Кнопка збереження
   var sw=document.createElement('div'); sw.className='save-wrap';
   var btn=document.createElement('button'); btn.className='save-btn'; btn.id='btn-save';
   btn.textContent='Зберегти фото';
@@ -234,7 +230,6 @@ function showRec(idx){
   sw.appendChild(btn);
   p.appendChild(sw);
 
-  // Блок прев'ю зображення (з'являється після рендеру)
   var iv=document.createElement('div'); iv.className='img-preview'; iv.id='img-preview';
   var imgEl=document.createElement('img'); imgEl.id='preview-img';
   var hint=document.createElement('p'); hint.className='img-hint';
@@ -244,7 +239,6 @@ function showRec(idx){
   p.appendChild(iv);
 }
 
-/* ===== Canvas рендер без зовнішніх бібліотек ===== */
 var _cachedCanvas=null, _cachedCid=null;
 
 function buildReceiptCanvas(d){
@@ -288,10 +282,10 @@ function buildReceiptCanvas(d){
   add('\u0424\u0406\u0421\u041A\u0410\u041B\u042C\u041D\u0418\u0419 \u0427\u0415\u041A',true,true);
   add('\u0414\u042F\u041A\u0423\u0404\u041C\u041E \u0417\u0410 \u041F\u041E\u041A\u0423\u041F\u041A\u0423!',false,true);
   add('CHECKBOX',false,true);
-  add('',false,false);
-  add('check.checkbox.ua/'+d.cid,false,true);
 
-  var H=PT+lines.length*LH+PB;
+  var qrSize = 80 * SC;
+  var H = PT + lines.length * LH + qrSize + (15 * SC) + PB;
+  
   var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
   var ctx=cv.getContext('2d');
   ctx.fillStyle='#faf8f5'; ctx.fillRect(0,0,W,H);
@@ -305,6 +299,19 @@ function buildReceiptCanvas(d){
     else{ctx.fillText(ln.t,PX,y);}
     y+=LH;
   }
+
+  var sourceQr = document.querySelector('.qr-box canvas');
+  if (sourceQr) {
+    var qrX = (W - qrSize) / 2;
+    ctx.drawImage(sourceQr, qrX, y, qrSize, qrSize);
+    y += qrSize + (5 * SC);
+    ctx.font = (9 * SC) + 'px "Courier New",Courier,monospace';
+    var hintText = "Перевірити чек онлайн";
+    var hW = ctx.measureText(hintText).width;
+    ctx.fillStyle = "#888";
+    ctx.fillText(hintText, (W - hW) / 2, y + (10 * SC));
+  }
+
   return cv;
 }
 
@@ -316,45 +323,42 @@ function getCanvas(){
   return _cachedCanvas;
 }
 
-/* ===== Зберегти / поділитися ===== */
 function doSave(){
   var btn=document.getElementById('btn-save');
   if(btn){btn.textContent='Обробка...'; btn.disabled=true;}
 
-  var canvas;
-  try{canvas=getCanvas();}
-  catch(e){
-    alert('Помилка рендеру: '+(e&&e.message?e.message:String(e)));
-    if(btn){btn.textContent='Зберегти фото'; btn.disabled=false;}
-    return;
-  }
-
-  var dataUrl=canvas.toDataURL('image/png');
-
-  // Показуємо зображення прямо на сторінці — це завжди працює
-  var iv=document.getElementById('img-preview');
-  var imgEl=document.getElementById('preview-img');
-  if(iv&&imgEl){
-    imgEl.src=dataUrl;
-    iv.classList.add('visible');
-  }
-
-  // Додатково — пробуємо Web Share API (iOS нативний Share Sheet)
-  canvas.toBlob(function(blob){
-    if(blob && navigator.canShare){
-      var file=new File([blob],'check.png',{type:'image/png'});
-      try{
-        if(navigator.canShare({files:[file]})){
-          navigator.share({files:[file],title:'Чек OneZoo'})
-            .catch(function(){/* скасовано — зображення вже показано */});
-        }
-      }catch(e){/* не підтримується — зображення вже показано */}
+  setTimeout(function(){
+    var canvas;
+    try{canvas=getCanvas();}
+    catch(e){
+      alert('Помилка рендеру: '+(e&&e.message?e.message:String(e)));
+      if(btn){btn.textContent='Зберегти фото'; btn.disabled=false;}
+      return;
     }
-    if(btn){btn.textContent='Зберегти фото'; btn.disabled=false;}
-  },'image/png');
+
+    var dataUrl=canvas.toDataURL('image/png');
+    var iv=document.getElementById('img-preview');
+    var imgEl=document.getElementById('preview-img');
+    if(iv&&imgEl){
+      imgEl.src=dataUrl;
+      iv.classList.add('visible');
+    }
+
+    canvas.toBlob(function(blob){
+      if(blob && navigator.canShare){
+        var file=new File([blob],'check.png',{type:'image/png'});
+        try{
+          if(navigator.canShare({files:[file]})){
+            navigator.share({files:[file],title:'Чек OneZoo'})
+              .catch(function(){});
+          }
+        }catch(e){}
+      }
+      if(btn){btn.textContent='Зберегти фото'; btn.disabled=false;}
+    },'image/png');
+  }, 100);
 }
 
-/* ===== Генерація ===== */
 function generate(){
   var name=document.getElementById('itemName').value.trim();
   var price=parseFloat(document.getElementById('price').value);
