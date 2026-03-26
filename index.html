@@ -46,14 +46,20 @@ input:focus{border-color:var(--accent)}
 .nbtn:active:not(:disabled){border-color:var(--accent);color:var(--accent)}
 .nbtn:disabled{opacity:.25;cursor:default}
 .nlbl{font-size:11px;color:var(--muted);min-width:70px;text-align:center}
-.action-wrap{display:flex;flex-direction:column;gap:8px;width:260px}
-.abrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.abtn{padding:13px 8px;border:none;border-radius:7px;font-family:'Martian Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;transition:.12s;-webkit-tap-highlight-color:transparent;width:100%}
-.abtn:active:not(:disabled){transform:scale(0.96)}
-.abtn:disabled{opacity:0.55;cursor:wait}
-.abtn-tg{background:#2AABEE;color:#fff}
-.abtn-vb{background:#7360F2;color:#fff}
-.abtn-save{background:var(--accent);color:#0f0f0f}
+
+/* Кнопка зберегти */
+.save-wrap{width:260px}
+.save-btn{width:100%;padding:15px;background:var(--accent);color:#0f0f0f;border:none;border-radius:7px;font-family:'Martian Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:52px;transition:.12s}
+.save-btn:active:not(:disabled){background:#d4ff1a;transform:scale(0.97)}
+.save-btn:disabled{opacity:0.55}
+
+/* Прев'ю зображення після рендеру */
+.img-preview{display:none;flex-direction:column;align-items:center;gap:10px;width:260px}
+.img-preview.visible{display:flex}
+.img-preview img{width:260px;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.img-hint{font-size:10px;color:var(--muted);text-align:center;line-height:1.7;letter-spacing:.03em}
+
+/* DOM чек */
 .rw{display:inline-flex;flex-direction:column;align-items:center;background:transparent;position:relative}
 .tt{width:260px;height:12px;background:repeating-linear-gradient(90deg,#e0ddd7 0,#e0ddd7 4px,#d0cdc7 4px,#d0cdc7 8px);border-radius:2px 2px 0 0;opacity:.6}
 .receipt{width:260px;background:var(--paper);padding:16px 12px 14px;font-family:'Courier New',monospace;font-size:12px;line-height:1.55;color:#1a1a1a}
@@ -128,7 +134,7 @@ input:focus{border-color:var(--accent)}
         <button class="nb" onclick="adj('cnt',1,1,1)">+</button>
       </div>
     </div>
-    <button class="gen" onclick="generateAndSwitch()">&#9654; Генерувати</button>
+    <button class="gen" onclick="generateAndSwitch()">Генерувати</button>
   </div>
 
   <div class="pp" id="panel-preview">
@@ -150,16 +156,25 @@ function switchTab(t){
   document.getElementById('panel-form').classList.toggle('tab-active',f);
   document.getElementById('panel-preview').classList.toggle('tab-active',!f);
 }
-function selFopFn(el){document.querySelectorAll('.fop-grid .fc').forEach(function(c){c.classList.remove('active');});el.classList.add('active');sFop=el.dataset.key;}
-function selPayFn(t,el){document.querySelectorAll('#pay-cash,#pay-card').forEach(function(c){c.classList.remove('active');});el.classList.add('active');sPay=t;}
-function adj(id,d,mn,step){var el=document.getElementById(id);var v=(parseFloat(el.value)||mn)+d*step;el.value=Math.max(mn,v).toFixed(id==='cnt'?0:3);}
-
-function randId(){return 'i'+Math.random().toString(36).substr(2,9);}
+function selFopFn(el){
+  document.querySelectorAll('.fop-grid .fc').forEach(function(c){c.classList.remove('active');});
+  el.classList.add('active'); sFop=el.dataset.key;
+}
+function selPayFn(t,el){
+  document.querySelectorAll('#pay-cash,#pay-card').forEach(function(c){c.classList.remove('active');});
+  el.classList.add('active'); sPay=t;
+}
+function adj(id,d,mn,step){
+  var el=document.getElementById(id);
+  var v=(parseFloat(el.value)||mn)+d*step;
+  el.value=Math.max(mn,v).toFixed(id==='cnt'?0:3);
+}
 
 function buildRecData(fop,name,qty,price,total,payLbl){
   return {fop:fop,name:name,qty:qty,price:price,total:total,payLbl:payLbl,
     loc:'2'+String(Math.floor(Math.random()*9999999)).padStart(7,'0'),
-    cid:randId(), dt:new Date().toLocaleString('uk-UA')};
+    cid:'i'+Math.random().toString(36).substr(2,9),
+    dt:new Date().toLocaleString('uk-UA')};
 }
 
 function buildRecDom(d){
@@ -175,9 +190,11 @@ function buildRecDom(d){
     row('СУМА',d.total.toFixed(2)+' ГРН')+cen('----------------------')+
     row(d.payLbl,d.total.toFixed(2)+' ГРН')+row('СУМА',d.total.toFixed(2)+' ГРН')+
     cen('======================','rb')+
-    row('Локальний номер:',d.loc)+cen('Чек № '+d.cid)+cen(d.dt)+
-    row('ФН ПРРО',d.fop.fnPrro)+
-    cen('ФІСКАЛЬНИЙ ЧЕК','rb')+cen('ДЯКУЄМО ЗА ПОКУПКУ!')+cen('CHECKBOX')+
+    row('Локальний номер:',d.loc)+cen('Чек \u2116 '+d.cid)+cen(d.dt)+
+    row('\u0424\u041D \u041F\u0420\u0420\u041E',d.fop.fnPrro)+
+    cen('\u0424\u0406\u0421\u041A\u0410\u041B\u042C\u041D\u0418\u0419 \u0427\u0415\u041A','rb')+
+    cen('\u0414\u042F\u041A\u0423\u0404\u041C\u041E \u0417\u0410 \u041F\u041E\u041A\u0423\u041F\u041A\u0423!')+
+    cen('CHECKBOX')+
     '<div class="qb"><div class="qr-box" data-url="https://check.checkbox.ua/'+d.cid+'"></div>'+
     '<div class="ql">Перевірити чек онлайн</div></div>';
   return el;
@@ -185,14 +202,18 @@ function buildRecDom(d){
 
 function showRec(idx){
   cur=idx;
+  _cachedCanvas=null; _cachedCid=null;
   var p=document.getElementById('panel-preview'); p.innerHTML='';
+
   if(recList.length>1){
     var nav=document.createElement('div'); nav.className='rnav';
-    nav.innerHTML='<button class="nbtn" onclick="showRec(cur-1)"'+(idx===0?' disabled':'')+'>&#8592;</button>'+
+    nav.innerHTML=
+      '<button class="nbtn" onclick="showRec(cur-1)"'+(idx===0?' disabled':'')+'>&#8592;</button>'+
       '<div class="nlbl">'+(idx+1)+' / '+recList.length+'</div>'+
       '<button class="nbtn" onclick="showRec(cur+1)"'+(idx===recList.length-1?' disabled':'')+'>&#8594;</button>';
     p.appendChild(nav);
   }
+
   var w=document.createElement('div'); w.className='rw';
   var tt=document.createElement('div'); tt.className='tt'; w.appendChild(tt);
   var domRec=buildRecDom(recList[idx]); w.appendChild(domRec);
@@ -202,92 +223,89 @@ function showRec(idx){
   var qrBox=domRec.querySelector('.qr-box');
   if(qrBox){
     try{new QRCode(qrBox,{text:qrBox.dataset.url,width:80,height:80,colorDark:'#1a1a1a',colorLight:'#faf8f5',correctLevel:QRCode.CorrectLevel.M});}
-    catch(e){qrBox.innerHTML='<div style="font-size:8px;color:#888;word-break:break-all">'+qrBox.dataset.url+'</div>';}
+    catch(e){qrBox.innerHTML='<div style="font-size:8px;color:#888">'+qrBox.dataset.url+'</div>';}
   }
 
-  var s=document.createElement('div'); s.className='action-wrap';
-  s.innerHTML=
-    '<div class="abrow">'+
-    '<button class="abtn abtn-tg" id="btn-tg" onclick="actionShare(\'tg\')">Telegram</button>'+
-    '<button class="abtn abtn-vb" id="btn-vb" onclick="actionShare(\'vb\')">Viber</button>'+
-    '</div>'+
-    '<button class="abtn abtn-save" id="btn-save" onclick="actionSave()">Зберегти фото</button>';
-  p.appendChild(s);
+  // Кнопка збереження
+  var sw=document.createElement('div'); sw.className='save-wrap';
+  var btn=document.createElement('button'); btn.className='save-btn'; btn.id='btn-save';
+  btn.textContent='Зберегти фото';
+  btn.addEventListener('click', doSave);
+  sw.appendChild(btn);
+  p.appendChild(sw);
+
+  // Блок прев'ю зображення (з'являється після рендеру)
+  var iv=document.createElement('div'); iv.className='img-preview'; iv.id='img-preview';
+  var imgEl=document.createElement('img'); imgEl.id='preview-img';
+  var hint=document.createElement('p'); hint.className='img-hint';
+  hint.innerHTML='Натисніть та утримуйте фото<br>&#8594; «Додати до фотографій»<br>або поділіться через Share';
+  iv.appendChild(imgEl);
+  iv.appendChild(hint);
+  p.appendChild(iv);
 }
 
-/* ===== CANVAS РЕНДЕР (без html2canvas) ===== */
+/* ===== Canvas рендер без зовнішніх бібліотек ===== */
 var _cachedCanvas=null, _cachedCid=null;
 
 function buildReceiptCanvas(d){
   var SC=3, PW=260;
-  var W=PW*SC;
-  var FS=12*SC;
-  var LH=Math.round(FS*1.55);
+  var W=PW*SC, FS=12*SC, LH=Math.round(FS*1.55);
   var PX=12*SC, PT=16*SC, PB=14*SC;
 
-  // Вимірюємо ширину символу
   var tc=document.createElement('canvas'); tc.width=W; tc.height=10;
-  var tx=tc.getContext('2d'); tx.font=FS+'px "Courier New",monospace';
+  var tx=tc.getContext('2d');
+  tx.font=FS+'px "Courier New",Courier,monospace';
   var CW=Math.ceil(tx.measureText('M').width);
   var COLS=Math.floor((W-PX*2)/CW);
 
-  function sepLine(ch){var s='';while(s.length<COLS)s+=ch;return s.substr(0,COLS);}
-  function twoCol(left,right){
-    var space=COLS-left.length-right.length;
-    if(space<1)space=1;
-    return left+Array(space+1).join(' ')+right;
+  function sep(ch){var s='';for(var i=0;i<COLS;i++)s+=ch;return s;}
+  function twoCol(l,r){
+    var sp=COLS-l.length-r.length;
+    if(sp<1)sp=1;
+    var pad='';for(var i=0;i<sp;i++)pad+=' ';
+    return l+pad+r;
   }
 
   var lines=[];
-  function add(txt,bold,center){lines.push({txt:String(txt),bold:!!bold,center:!!center});}
+  function add(t,b,c){lines.push({t:String(t),b:!!b,c:!!c});}
 
   d.fop.name.forEach(function(t){add(t,false,true);});
   add('магазин',false,true);
   d.fop.addr.forEach(function(t){add(t,false,true);});
   add(d.fop.id,false,true);
-  add(sepLine('='),false,false);
+  add(sep('='),false,false);
   add(d.qty.toFixed(3)+' x '+d.price.toFixed(2),false,false);
   add(d.name.toUpperCase(),false,false);
   add(twoCol('СУМА',d.total.toFixed(2)+' ГРН'),false,false);
-  add(sepLine('-'),false,false);
+  add(sep('-'),false,false);
   add(twoCol(d.payLbl,d.total.toFixed(2)+' ГРН'),false,false);
   add(twoCol('СУМА',d.total.toFixed(2)+' ГРН'),false,false);
-  add(sepLine('='),false,false);
+  add(sep('='),false,false);
   add(twoCol('Локальний номер:',d.loc),false,false);
-  add('Чек № '+d.cid,false,true);
+  add('Чек \u2116 '+d.cid,false,true);
   add(d.dt,false,true);
-  add(twoCol('ФН ПРРО',d.fop.fnPrro),false,false);
-  add('ФІСКАЛЬНИЙ ЧЕК',true,true);
-  add('ДЯКУЄМО ЗА ПОКУПКУ!',false,true);
+  add(twoCol('\u0424\u041D \u041F\u0420\u0420\u041E',d.fop.fnPrro),false,false);
+  add('\u0424\u0406\u0421\u041A\u0410\u041B\u042C\u041D\u0418\u0419 \u0427\u0415\u041A',true,true);
+  add('\u0414\u042F\u041A\u0423\u0404\u041C\u041E \u0417\u0410 \u041F\u041E\u041A\u0423\u041F\u041A\u0423!',false,true);
   add('CHECKBOX',false,true);
   add('',false,false);
   add('check.checkbox.ua/'+d.cid,false,true);
 
   var H=PT+lines.length*LH+PB;
-  var canvas=document.createElement('canvas');
-  canvas.width=W; canvas.height=H;
-  var ctx=canvas.getContext('2d');
-
-  ctx.fillStyle='#faf8f5';
-  ctx.fillRect(0,0,W,H);
+  var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  var ctx=cv.getContext('2d');
+  ctx.fillStyle='#faf8f5'; ctx.fillRect(0,0,W,H);
   ctx.fillStyle='#1a1a1a';
-
-  var FONT_N=FS+'px "Courier New",monospace';
-  var FONT_B='bold '+FS+'px "Courier New",monospace';
-
+  var FN=FS+'px "Courier New",Courier,monospace';
+  var FB='bold '+FS+'px "Courier New",Courier,monospace';
   var y=PT+FS;
   for(var i=0;i<lines.length;i++){
-    var ln=lines[i];
-    ctx.font=ln.bold?FONT_B:FONT_N;
-    if(ln.center){
-      var tw=ctx.measureText(ln.txt).width;
-      ctx.fillText(ln.txt,Math.round((W-tw)/2),y);
-    } else {
-      ctx.fillText(ln.txt,PX,y);
-    }
+    var ln=lines[i]; ctx.font=ln.b?FB:FN;
+    if(ln.c){var tw=ctx.measureText(ln.t).width; ctx.fillText(ln.t,Math.round((W-tw)/2),y);}
+    else{ctx.fillText(ln.t,PX,y);}
     y+=LH;
   }
-  return canvas;
+  return cv;
 }
 
 function getCanvas(){
@@ -298,88 +316,45 @@ function getCanvas(){
   return _cachedCanvas;
 }
 
-function setBusy(busy){
-  ['btn-save','btn-tg','btn-vb'].forEach(function(id){
-    var b=document.getElementById(id); if(!b)return;
-    if(busy){if(!b._orig)b._orig=b.innerHTML; b.innerHTML='...'; b.disabled=true;}
-    else{b.innerHTML=b._orig||b.innerHTML; b.disabled=false;}
-  });
-}
+/* ===== Зберегти / поділитися ===== */
+function doSave(){
+  var btn=document.getElementById('btn-save');
+  if(btn){btn.textContent='Обробка...'; btn.disabled=true;}
 
-function getDataUrl(){
-  try{return getCanvas().toDataURL('image/png');}
-  catch(e){alert('Помилка рендеру: '+(e&&e.message?e.message:String(e)));return null;}
-}
-
-function openImageTab(dataUrl,app){
-  var appName=app==='tg'?'Telegram':app==='vb'?'Viber':'';
-  var color=app==='tg'?'#2AABEE':'#7360F2';
-  var deepLink=app==='tg'?'tg://resolve':'viber://';
-  var w=window.open('','_blank');
-  if(!w){alert('Дозвольте спливаючі вікна для цього сайту');return;}
-  var btnHtml=appName?('<a style="display:block;margin-top:12px;padding:12px 28px;background:'+color+';color:#fff;border-radius:8px;font-family:monospace;font-size:14px;font-weight:bold;text-decoration:none;text-align:center" href="'+deepLink+'">Відкрити '+appName+'</a>'):'';
-  var hint=appName
-    ?'1. Утримуйте фото → «Додати до фотографій»<br>2. Відкрийте '+appName+' і перешліть з галереї'
-    :'Натисніть та утримуйте фото<br>→ «Додати до фотографій»';
-  w.document.write('<!DOCTYPE html><html><head>'
-    +'<meta name="viewport" content="width=device-width,initial-scale=1">'
-    +'<title>Чек OneZoo</title>'
-    +'<style>body{margin:0;background:#111;display:flex;flex-direction:column;align-items:center;padding:20px;gap:12px}'
-    +'img{max-width:100%;border-radius:4px}'
-    +'.hint{color:#aaa;font-family:monospace;font-size:13px;text-align:center;line-height:1.8}'
-    +'</style></head><body>'
-    +'<img src="'+dataUrl+'">'
-    +'<p class="hint">'+hint+'</p>'
-    +btnHtml
-    +'</body></html>');
-  w.document.close();
-}
-
-function actionSave(){
-  setBusy(true);
-  var dataUrl=getDataUrl();
-  if(!dataUrl){setBusy(false);return;}
-  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
-  if(isIOS){
-    openImageTab(dataUrl,'');
-  } else {
-    var a=document.createElement('a');
-    a.href=dataUrl; a.download='check_'+recList[cur].cid+'.png';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  }
-  setBusy(false);
-}
-
-function actionShare(app){
-  setBusy(true);
   var canvas;
   try{canvas=getCanvas();}
-  catch(e){alert('Помилка: '+(e&&e.message?e.message:String(e)));setBusy(false);return;}
+  catch(e){
+    alert('Помилка рендеру: '+(e&&e.message?e.message:String(e)));
+    if(btn){btn.textContent='Зберегти фото'; btn.disabled=false;}
+    return;
+  }
 
+  var dataUrl=canvas.toDataURL('image/png');
+
+  // Показуємо зображення прямо на сторінці — це завжди працює
+  var iv=document.getElementById('img-preview');
+  var imgEl=document.getElementById('preview-img');
+  if(iv&&imgEl){
+    imgEl.src=dataUrl;
+    iv.classList.add('visible');
+  }
+
+  // Додатково — пробуємо Web Share API (iOS нативний Share Sheet)
   canvas.toBlob(function(blob){
-    if(!blob){
-      // toBlob не підтримується — fallback на dataURL
-      var dataUrl=canvas.toDataURL('image/png');
-      openImageTab(dataUrl,app);
-      setBusy(false);
-      return;
+    if(blob && navigator.canShare){
+      var file=new File([blob],'check.png',{type:'image/png'});
+      try{
+        if(navigator.canShare({files:[file]})){
+          navigator.share({files:[file],title:'Чек OneZoo'})
+            .catch(function(){/* скасовано — зображення вже показано */});
+        }
+      }catch(e){/* не підтримується — зображення вже показано */}
     }
-    var file=new File([blob],'check.png',{type:'image/png'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      navigator.share({files:[file],title:'Чек OneZoo'})
-        .then(function(){setBusy(false);})
-        .catch(function(e){
-          if(e&&e.name==='AbortError'){setBusy(false);return;}
-          openImageTab(canvas.toDataURL('image/png'),app);
-          setBusy(false);
-        });
-    } else {
-      openImageTab(canvas.toDataURL('image/png'),app);
-      setBusy(false);
-    }
+    if(btn){btn.textContent='Зберегти фото'; btn.disabled=false;}
   },'image/png');
 }
 
+/* ===== Генерація ===== */
 function generate(){
   var name=document.getElementById('itemName').value.trim();
   var price=parseFloat(document.getElementById('price').value);
